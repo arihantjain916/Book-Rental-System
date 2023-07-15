@@ -1,0 +1,28 @@
+{
+  "name": "lms",
+  "version": "1.0.0",
+  "description": "Library Management System made using graphql for my nodejs project erp-portal",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "library",
+    "erp-portal"
+  ],
+  "author": "Arihant-Jain",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^4.7.5",
+    "dotenv": "^16.3.1",
+    "graphql": "^16.7.1",
+    "graphql-tag": "^2.12.6",
+    "mongoose": "^7.3.2",
+    "node-schedule": "^2.1.1",
+    "nodemon": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/node-schedule": "^2.1.0"
+  }
+}
