@@ -1,5 +1,5 @@
 
-# Library Management System
+# Book Rental System
 
 This project is a GraphQL API for a library management system. It is built using Node.js, GraphQL, and MongoDB. The project offers the following features:
 
