@@ -25,6 +25,7 @@ type Rent {
   rentername: String!
   renteremail: String!
   books: [BookRental!]!
+  # message: String
 }
 
 type BookRental {
@@ -35,28 +36,31 @@ type BookRental {
   paid: Boolean!
 }
 
-type GetFine {
+type Fine {
   rent: Rent!
   message: String!
 }
 
-type PayFine{
-  rent: Book
-  message: String
-}
-
-
 
 input BookInput {
-    title: String!
-    author: ID!
-    description: String!
-    isbn: String!
-    language: String!
-    price: Float!
+    title: String
+    author: ID
+    description: String
+    isbn: String
+    language: String
+    price: Float
     rating:Float
-    noofbooksavailable: Int!
-    # createdAt: String
+    noofbooksavailable: Int
+}
+
+input UpdateBookInput {
+    title: String
+    description: String
+    isbn: String
+    language: String
+    price: Float
+    rating:Float
+    noofbooksavailable: Int
 }
 
 input AuthorInput {
@@ -69,6 +73,7 @@ input RentInput {
   renteremail: String!
   books: [BookRentalInput!]!
 }
+
 
 input BookRentalInput {
   book: ID!
@@ -90,14 +95,14 @@ type Query{
 type Mutation{
     createBook(bookInput: BookInput!): Book!
     deleteBook(ID: ID!): Boolean
-    editBook(ID:ID!, bookInput : BookInput): Boolean
+    editBook(ID:ID!, updatebookInput : UpdateBookInput): Boolean
     createAuthor(authorInput: AuthorInput!): Author!
     deleteAuthor(ID: ID!): Boolean
     editAuthor(ID:ID!, authorInput : AuthorInput): Boolean
     createRent(RentInput: RentInput!) : Rent
     deleteRent(ID:ID!): Boolean
     returnBook(ReturnBookInput: ReturnBookInput): Rent
-    getfine(ID:ID!): GetFine
-    payfine(ReturnBookInput:ReturnBookInput): PayFine
+    getfine(ID:ID!): Fine
+    payfine(ReturnBookInput:ReturnBookInput): Fine
 }
 `
