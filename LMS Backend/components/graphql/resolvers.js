@@ -95,7 +95,7 @@ const resolvers = {
       }
     ) {
       const updated = (
-        await Recipe.updateOne(
+        await Books.updateOne(
           {
             _id: ID,
           },
@@ -137,7 +137,7 @@ const resolvers = {
     // Update Author
     async editAuthor(_, { ID, authorInput: { name, email, book } }) {
       const updated = (
-        await Recipe.updateOne(
+        await Author.updateOne(
           {
             _id: ID,
           },
