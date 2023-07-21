@@ -1,7 +1,6 @@
 const Books = require("../models/Book");
 const Author = require("../models/Author");
 const Rent = require("../models/RentBook");
-const { isConstValueNode } = require("graphql");
 const resolvers = {
   Query: {
     async books(_, { ID }) {
@@ -16,17 +15,19 @@ const resolvers = {
       }
     },
     async getBook(_, { amount }) {
-      return await Books.find().populate("author").sort({ createdAt: -1 }).limit(amount);
+      return await Books.find()
+        .populate("author")
+        .sort({ createdAt: -1 })
+        .limit(amount);
     },
     async author(_, { ID }) {
       try {
-        const author = await Author.findById(ID).populate("books")
+        const author = await Author.findById(ID).populate("books");
         if (!author) {
           throw new Error("Author not found");
         }
-        return [author]
-      }
-      catch (error) {
+        return [author];
+      } catch (error) {
         throw new Error(error.message);
       }
     },
@@ -34,16 +35,14 @@ const resolvers = {
       return await Author.find().sort({ createdAt: -1 }).limit(amount);
     },
     async getRent(_, { ID }) {
-      const rent = await Rent.findById(ID).populate("books.book")
-      return [rent]
+      const rent = await Rent.findById(ID).populate("books.book");
+      return [rent];
     },
   },
   Mutation: {
     // Books Mutation
     // Create Book
-    async createBook(_, {
-      bookInput
-    }) {
+    async createBook(_, { bookInput }) {
       try {
         // Create the book
         const book = await Books.create(bookInput);
@@ -51,7 +50,7 @@ const resolvers = {
         // Update the associated author's books field
         const author = await Author.findById(bookInput.author);
         if (!author) {
-          throw new Error('Author not found');
+          throw new Error("Author not found");
         }
         author.books.push(book._id);
         await author.save();
@@ -64,18 +63,16 @@ const resolvers = {
 
     // Delete Book
     async deleteBook(_, { ID }) {
-      const id = ID
-      const Book = await Books.findById(ID)
+      const id = ID;
+      const Book = await Books.findById(ID);
       // const author = await Author.findById(Book.author);
       const deleted = (await Books.deleteOne({ _id: ID })).deletedCount;
       if (deleted) {
         await Author.updateOne({ _id: Book.author }, { $pull: { books: id } });
         return deleted;
+      } else {
+        throw new Error("Deleted unsuccessfull");
       }
-      else {
-        throw new Error("Deleted unsuccessfull")
-      }
-
     },
 
     // Update Book
@@ -83,14 +80,14 @@ const resolvers = {
       _,
       {
         ID,
-        bookInput: {
+        updatebookInput: {
           title,
-          author,
           description,
           isbn,
           language,
           price,
           rating,
+          noofbooksavailable
         },
       }
     ) {
@@ -102,12 +99,12 @@ const resolvers = {
           {
             $set: {
               title,
-              author,
               description,
               isbn,
               language,
               price,
               rating,
+              noofbooksavailable
             },
           }
         )
@@ -129,13 +126,13 @@ const resolvers = {
         ...res._doc,
       };
     },
+    // Delete Author
     async deleteAuthor(_, { ID }) {
       const deleted = (await Author.deleteOne({ _id: ID })).deletedCount;
       return deleted;
     },
-    // Delete Author
     // Update Author
-    async editAuthor(_, { ID, authorInput: { name, email, book } }) {
+    async editAuthor(_, { ID, authorInput: { name, email } }) {
       const updated = (
         await Author.updateOne(
           {
@@ -143,9 +140,8 @@ const resolvers = {
           },
           {
             $set: {
-              name,
-              email,
-              book,
+              name: name,
+              email: email,
             },
           }
         )
@@ -156,39 +152,58 @@ const resolvers = {
     // Create Rent
     async createRent(_, { RentInput }) {
       const { renteremail, books } = RentInput;
+      const [{ book }] = books;
+      let existingRent = await Rent.findOne({ renteremail });
 
-      // Check if the email exists
-      const existingRent = await Rent.findOne({ renteremail });
+      if (existingRent) {
+        const existingBook = await Books.findById(book);
+        if (existingBook) {
+          const isBookPresent = existingRent.books.some(
+            (existingBook) => existingBook.book.toString() === book
+          );
 
-      const rent = existingRent || await Rent.create(RentInput);
+          if (isBookPresent) {
+            throw new Error("Book already exists in the rent");
+          } else {
+            existingRent.books.push(...books);
+            await existingRent.save();
+          }
+        } else {
+          throw new Error("Book does not exist");
+        }
+      } else {
+        const existingBook = await Books.findById(book);
+        if (existingBook) {
+          await Rent.create(RentInput);
+        } else {
+          throw new Error("Book does not exist");
+        }
+      }
 
-      rent.books.push(...books);
-
-      await rent.save();
-
-      return rent;
+      existingRent = await Rent.findOne({ renteremail });
+      return existingRent;
     },
     async deleteRent(_, { ID }) {
       const deleted = (await Rent.deleteOne({ _id: ID })).deletedCount;
       if (deleted) {
         return deleted;
+      } else {
+        throw new Error("Delete unsuccessfull");
       }
-      else {
-        throw new Error("Delete unsuccessfull")
-      }
-
     },
     async returnBook(_, { ReturnBookInput }) {
       const { ID, bookId } = ReturnBookInput;
 
       const rent = await Rent.findById(ID).populate("books.book");
       if (!rent) {
-        throw new Error('Rental not found');
+        throw new Error("Rental not found");
       }
 
-      const bookRental = rent.books.find((book) => book.book._id.toString() === bookId);
+      const bookRental = rent.books.find(
+        (book) => book.book._id.toString() === bookId
+      );
       if (!bookRental) {
-        throw new Error('Book not found in rental');
+        throw new Error("Book not found in rental");
       }
       bookRental.returned = true;
       await rent.save();
@@ -198,14 +213,17 @@ const resolvers = {
     async getfine(_, { ID }) {
       const rent = await Rent.findById(ID).populate("books.book");
       if (!rent) {
-        throw new Error('Rental not found');
+        throw new Error("Rental not found");
       }
 
       const totalFine = rent.books.reduce((total, bookRental) => {
         return total + bookRental.fine;
       }, 0);
 
-      const message = totalFine === 0 ? "You have no fine" : `You have to pay Rs. ${totalFine}`;
+      const message =
+        totalFine === 0
+          ? "You have no fine"
+          : `You have to pay Rs. ${totalFine}`;
 
       return { rent, message };
     },
@@ -213,23 +231,24 @@ const resolvers = {
       const { ID, bookId } = ReturnBookInput;
       const rent = await Rent.findById(ID).populate("books.book");
       if (!rent) {
-        throw new Error('Rental not found');
+        throw new Error("Rental not found");
       }
 
-      const bookRental = rent.books.find((book) => book.book._id.toString() === bookId);
+      const bookRental = rent.books.find(
+        (book) => book.book._id.toString() === bookId
+      );
       if (!bookRental) {
-        throw new Error('Book not found in rental');
+        throw new Error("Book not found in rental");
       }
-      let message
+      let message;
 
       if (bookRental.fine === 0) {
-        message = "You have no fine"
+        message = "You have no fine";
+      } else {
+        message = `You have to pay Rs.${bookRental.fine}`;
       }
-      else {
-        message = `You have to pay Rs.${bookRental.fine}`
-      }
-      return { rent:bookRental.book, message }
-    }
+      return { rent: bookRental.book, message };
+    },
     // a
   },
 };
