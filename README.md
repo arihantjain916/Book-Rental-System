@@ -14,7 +14,11 @@ The project ensures data security by storing information in a MongoDB database, 
 
 The project was created to integrate with the [ERP portal](https://github.com/arihantjain916/ERP-Portal.git), where students can access the library. The project is available on GitHub.
 
-**Note:** To access all schema [click here](https://studio.apollographql.com/graph/Library-Management-System/variant/current/schema/reference) 
+The API is live on [link](https://book-rental-system-production-44d7.up.railway.app/)
+
+**Note:** 
+- To access live API click on link and paste the url in apollo sandbox and take query reference from below link...
+- To access all schema [click here](https://studio.apollographql.com/graph/Library-Management-System/variant/current/schema/reference) 
 ## Run Locally
 
 Clone the project
